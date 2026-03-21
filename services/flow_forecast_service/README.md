@@ -1,8 +1,6 @@
 # flow_forecast_service
 
-阶段1实现内容：
-
-- 默认模型：`LightGBMRegressor`
-- 输入字段：`flow_m3s`, `rain_intensity_mmph`, `temp_C`
-- 窗口长度：24（120 秒）
+- 作用：流量短时预测
 - 统一接口：`GET /health`、`GET /meta`、`POST /infer`
+- 当前版本：`v1`
+- 适合在多边缘设备上统一部署与回放测试。

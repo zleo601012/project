@@ -6,7 +6,14 @@ from fastapi import FastAPI
 from shared.config.service_catalog import SERVICE_CATALOG
 from shared.logging.json_logger import log_task
 from shared.ml.model_io import load_metadata, load_model
-from shared.schemas.common import AnomalyResponse, ForecastResponse, InferRequest, ServiceMeta, TaskLogEntry
+from shared.schemas.common import (
+    AnomalyResponse,
+    ForecastResponse,
+    InferRequest,
+    RiskScoreResponse,
+    ServiceMeta,
+    TaskLogEntry,
+)
 
 
 def create_inference_app(service_name: str, predictor):
@@ -21,22 +28,29 @@ def create_inference_app(service_name: str, predictor):
             state['metadata'] = load_metadata(service_name)
         return state['model'], state['metadata']
 
+    response_model = {
+        'anomaly': AnomalyResponse,
+        'forecast': ForecastResponse,
+        'risk_score': RiskScoreResponse,
+    }[definition.task_type]
+
     @app.get('/health')
     def health():
         return {'status': 'ok', 'service_name': service_name}
 
     @app.get('/meta', response_model=ServiceMeta)
     def meta():
+        metadata = ensure_loaded()[1]
         return ServiceMeta(
             service_name=service_name,
-            model_name=ensure_loaded()[1]['model_name'],
-            model_version=ensure_loaded()[1]['model_version'],
+            model_name=metadata['model_name'],
+            model_version=metadata['model_version'],
             task_type=definition.task_type,
             window_length=definition.window_length,
             input_fields=definition.input_fields,
         )
 
-    @app.post('/infer', response_model=AnomalyResponse if definition.task_type == 'anomaly' else ForecastResponse)
+    @app.post('/infer', response_model=response_model)
     def infer(request: InferRequest):
         submit_ts = datetime.now(timezone.utc)
         start = time.perf_counter()

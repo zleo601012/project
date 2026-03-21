@@ -20,7 +20,7 @@ from system_services.window_builder_service.app import app as builder_app
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('--dataset', required=True)
-    parser.add_argument('--limit', type=int, default=30)
+    parser.add_argument('--limit', type=int, default=80)
     args = parser.parse_args()
 
     settings = get_settings()
@@ -47,10 +47,14 @@ def main():
     tasks = task_resp.json()['generated_tasks']
 
     print(f'replay records={len(records)} generated_tasks={len(tasks)}')
-    for task in tasks[:4]:
-        client = anomaly_client if task['service_name'] == 'flow_anomaly_service' else forecast_client
-        response = client.post('/infer', json=task)
-        print(response.json())
+    for task in tasks:
+        if task['service_name'] == 'flow_anomaly_service':
+            print(anomaly_client.post('/infer', json=task).json())
+            break
+    for task in tasks:
+        if task['service_name'] == 'flow_forecast_service':
+            print(forecast_client.post('/infer', json=task).json())
+            break
 
 
 if __name__ == '__main__':

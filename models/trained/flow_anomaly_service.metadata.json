@@ -2,7 +2,9 @@
   "service_name": "flow_anomaly_service",
   "model_name": "IsolationForest",
   "model_version": "v1",
-  "threshold": 6.674352269416071,
   "training_samples": 4315,
-  "dataset_path": "dataset/node_1.csv"
+  "dataset_path": "dataset/node_1.csv",
+  "window_length": 12,
+  "task_type": "anomaly",
+  "threshold": 6.674352269416071
 }
