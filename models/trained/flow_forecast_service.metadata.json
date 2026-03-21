@@ -1,0 +1,7 @@
+{
+  "service_name": "flow_forecast_service",
+  "model_name": "LightGBMRegressor",
+  "model_version": "v1",
+  "training_samples": 4308,
+  "dataset_path": "dataset/node_1.csv"
+}
