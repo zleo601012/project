@@ -5,6 +5,7 @@
 - **作用**：流量异常检测
 - **任务类型**：`anomaly`
 - **默认模型**：`FlowAnomalyBaseline`
+- **默认模型**：`IsolationForest`
 - **窗口长度**：`12` 条记录
 - **适用场景**：用于识别流量在降雨和温度共同作用下的异常波动，适合作为泵站、管网或监测点的快速异常告警服务。
 
@@ -93,6 +94,8 @@
   "label": "normal_or_abnormal",
   "model_name": "FlowAnomalyBaseline",
   "model_version": "v2",
+  "model_name": "IsolationForest",
+  "model_version": "v1",
   "inference_ms": 8
 }
 ```
@@ -105,12 +108,14 @@
 
 ```bash
 python3 training/flow_anomaly/train.py --dataset dataset/node_1.csv
+python training/flow_anomaly/train.py --dataset dataset/node_1.csv
 ```
 
 如果需要一口气训练所有业务微服务，可以执行：
 
 ```bash
 python3 scripts/train_all_services.py --dataset dataset/node_1.csv
+python scripts/train_all_services.py --dataset dataset/node_1.csv
 ```
 
 ## 5.1 推荐的快速自测方式
@@ -119,6 +124,7 @@ python3 scripts/train_all_services.py --dataset dataset/node_1.csv
 
 ```bash
 ./scripts/test_flow_services.sh --dataset dataset/node_1.csv
+python scripts/test_flow_services.py --dataset dataset/node_1.csv
 ```
 
 这个脚本会自动补齐模型训练（如果模型文件还不存在），并顺序调用：
@@ -131,12 +137,16 @@ python3 scripts/train_all_services.py --dataset dataset/node_1.csv
 ## 6. 本地运行方式
 
 如果运行环境已安装 `uvicorn` / `fastapi`，并且你想做真实端口联调，可以本地启动：
+## 6. 本地运行方式
+
+如果运行环境已安装 `uvicorn` / `fastapi`，可以直接本地启动：
 
 ```bash
 uvicorn services.flow_anomaly_service.app:app --host 0.0.0.0 --port 8101
 ```
 
 启动后再访问：
+启动后可访问：
 
 - `http://127.0.0.1:8101/health`
 - `http://127.0.0.1:8101/meta`
@@ -155,6 +165,7 @@ uvicorn services.flow_anomaly_service.app:app --host 0.0.0.0 --port 8101
 ## 8. 当前实现说明
 
 - 当前版本号：`v2`
+- 当前版本号：`v1`
 - 当前以“先跑通完整链路”为目标
 - 模型精度不是第一优先级，后续可以替换为更强模型或更精细的弱标签策略
 - 模型二进制文件默认不入库，由训练脚本在本地生成
@@ -169,3 +180,5 @@ docker run --rm -p 8000:8000 edge-offload/flow_anomaly_service:local
 ```
 
 > 如果需要在容器内执行 `/meta` 或 `/infer`，请先在宿主机生成 `models/trained/flow_anomaly_service.joblib`，或在镜像构建前将训练产物放入构建上下文。仅 `/health` 不依赖模型文件。
+> 如果需要在容器内执行推理，请先在宿主机生成 `models/trained/flow_anomaly_service.joblib`，或在镜像构建前将训练产物放入构建上下文。
+

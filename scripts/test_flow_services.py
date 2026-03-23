@@ -129,6 +129,8 @@ def main() -> None:
     tasks = build_tasks(args.dataset, limit=args.limit)
     anomaly_task = _find_task(tasks, 'flow_anomaly_service', args.limit)
     forecast_task = _find_task(tasks, 'flow_forecast_service', args.limit)
+    anomaly_task = next(task for task in tasks if task['service_name'] == 'flow_anomaly_service')
+    forecast_task = next(task for task in tasks if task['service_name'] == 'flow_forecast_service')
     check_service('flow_anomaly_service', anomaly_app, anomaly_task)
     check_service('flow_forecast_service', forecast_app, forecast_task)
     print('flow services smoke test passed')

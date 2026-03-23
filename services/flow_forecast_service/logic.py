@@ -2,6 +2,8 @@ from __future__ import annotations
 
 from shared.config.service_definition import ServiceDefinition
 from shared.ml.phase1_models import predict_flow_forecast, train_flow_forecast_service
+from shared.ml.predictors import predict_forecast
+from shared.ml.service_logic import train_forecast_service
 
 SERVICE_DEFINITION = ServiceDefinition(
     service_name='flow_forecast_service',
@@ -23,3 +25,12 @@ def train(dataset_path: str, limit: int | None = None):
         SERVICE_DEFINITION.window_length,
         limit=limit,
     )
+    model_name='LightGBMRegressor',
+    target_field='flow_m3s',
+)
+
+predict = predict_forecast
+
+
+def train(dataset_path: str, limit: int | None = None):
+    return train_forecast_service(SERVICE_DEFINITION, dataset_path, limit=limit)
