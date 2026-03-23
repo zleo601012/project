@@ -26,6 +26,20 @@
 
 ## 快速开始
 
+### 先测试已经独立化的 flow 两个服务
+
+```bash
+./scripts/test_flow_services.sh --dataset dataset/node_1.csv
+```
+
+这个脚本会直接调用两个服务自己的 `/train`、`/meta`、`/infer`，不再依赖共享 replay/window-builder 服务。
+
+### 直接单独构建 flow 服务镜像
+
+```bash
+docker build -f services/flow_anomaly_service/Dockerfile services/flow_anomaly_service -t edge-offload/flow-anomaly-service:standalone
+docker build -f services/flow_forecast_service/Dockerfile services/flow_forecast_service -t edge-offload/flow-forecast-service:standalone
+```
 ### 先测试 flow_anomaly_service + flow_forecast_service（不需要先启动 uvicorn）
 
 ```bash

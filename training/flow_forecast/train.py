@@ -12,6 +12,11 @@ from services.flow_forecast_service.logic import train as service_train
 
 
 def train(dataset_path: str, limit: int | None = None):
+    return service_train(
+        dataset_path,
+        limit=limit,
+        output_dir=ROOT / 'models' / 'trained',
+    )
     return service_train(dataset_path, limit=limit)
 
 

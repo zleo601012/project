@@ -2,6 +2,8 @@ version: '3.9'
 services:
   flow_anomaly_service:
     build:
+      context: ../../services/flow_anomaly_service
+      dockerfile: Dockerfile
       context: ../..
       dockerfile: services/flow_anomaly_service/Dockerfile
     image: edge-offload/flow-anomaly-service:local
@@ -38,6 +40,8 @@ services:
     ports: ['8106:8000']
   flow_forecast_service:
     build:
+      context: ../../services/flow_forecast_service
+      dockerfile: Dockerfile
       context: ../..
       dockerfile: services/flow_forecast_service/Dockerfile
     image: edge-offload/flow-forecast-service:local
