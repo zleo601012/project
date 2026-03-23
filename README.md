@@ -29,6 +29,7 @@
 ### 先测试 flow_anomaly_service + flow_forecast_service（不需要先启动 uvicorn）
 
 ```bash
+./scripts/test_flow_services.sh --dataset dataset/node_1.csv
 python scripts/test_flow_services.py --dataset dataset/node_1.csv
 ```
 
@@ -41,6 +42,9 @@ python scripts/test_flow_services.py --dataset dataset/node_1.csv
 ### 完整训练 / demo / pytest
 
 ```bash
+python3 scripts/train_all_services.py --dataset dataset/node_1.csv
+python3 scripts/run_all_services_demo.py --dataset dataset/node_1.csv --limit 80
+python3 -m pytest -q
 python scripts/train_all_services.py --dataset dataset/node_1.csv
 python scripts/run_all_services_demo.py --dataset dataset/node_1.csv --limit 80
 python -m pytest -q
@@ -49,6 +53,7 @@ python -m pytest -q
 如果本机提示找不到 `pytest`，请先安装开发依赖：
 
 ```bash
+python3 -m pip install -e ".[dev]"
 python -m pip install -e ".[dev]"
 ```
 

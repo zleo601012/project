@@ -92,6 +92,16 @@ def build_tasks(dataset_path: str, limit: int) -> list[dict]:
     return tasks
 
 
+def _find_task(tasks: list[dict], service_name: str, replay_limit: int) -> dict:
+    for task in tasks:
+        if task['service_name'] == service_name:
+            return task
+    raise SystemExit(
+        f'no task generated for {service_name}; increase --limit (current: {replay_limit}) '
+        'so the window builder has enough records.'
+    )
+
+
 def check_service(name: str, app, task: dict) -> None:
     client = TestClient(app)
     health = client.get('/health')
@@ -117,6 +127,8 @@ def main() -> None:
 
     ensure_models(args.dataset, limit=args.train_limit)
     tasks = build_tasks(args.dataset, limit=args.limit)
+    anomaly_task = _find_task(tasks, 'flow_anomaly_service', args.limit)
+    forecast_task = _find_task(tasks, 'flow_forecast_service', args.limit)
     anomaly_task = next(task for task in tasks if task['service_name'] == 'flow_anomaly_service')
     forecast_task = next(task for task in tasks if task['service_name'] == 'flow_forecast_service')
     check_service('flow_anomaly_service', anomaly_app, anomaly_task)

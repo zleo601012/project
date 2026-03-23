@@ -106,12 +106,14 @@
 训练命令示例：
 
 ```bash
+python3 training/flow_forecast/train.py --dataset dataset/node_1.csv
 python training/flow_forecast/train.py --dataset dataset/node_1.csv
 ```
 
 如果需要一口气训练所有业务微服务，可以执行：
 
 ```bash
+python3 scripts/train_all_services.py --dataset dataset/node_1.csv
 python scripts/train_all_services.py --dataset dataset/node_1.csv
 ```
 
@@ -120,6 +122,7 @@ python scripts/train_all_services.py --dataset dataset/node_1.csv
 如果你只是想验证这两个 phase-1 流量服务能不能正常工作，最简单的方式不是先起 `uvicorn`，而是直接运行：
 
 ```bash
+./scripts/test_flow_services.sh --dataset dataset/node_1.csv
 python scripts/test_flow_services.py --dataset dataset/node_1.csv
 ```
 
