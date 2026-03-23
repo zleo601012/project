@@ -8,3 +8,4 @@ docker push registry.example.com/edge-offload/flow-anomaly-service:v1
 ```
 
 建议保持“一服务一镜像一标签”的发布策略，便于后续做镜像缓存和调度实验。
+# deployment/registry/README.md
