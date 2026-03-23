@@ -1,0 +1,10 @@
+{
+  "service_name": "cod_forecast_service",
+  "model_name": "LightGBMRegressor",
+  "model_version": "v1",
+  "training_samples": 4308,
+  "dataset_path": "dataset/node_1.csv",
+  "window_length": 24,
+  "task_type": "forecast",
+  "target_field": "COD_mgL"
+}
