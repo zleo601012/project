@@ -17,6 +17,7 @@ def train(dataset_path: str, limit: int | None = None):
         limit=limit,
         output_dir=ROOT / 'models' / 'trained',
     )
+    return service_train(dataset_path, limit=limit)
 
 
 def main():

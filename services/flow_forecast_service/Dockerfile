@@ -12,6 +12,11 @@ RUN mkdir -p /app/services/flow_forecast_service \
     && touch /app/services/__init__.py
 
 COPY . /app/services/flow_forecast_service
+    PORT=8000
+
+WORKDIR /app
+
+COPY . /app
 
 EXPOSE 8000
 
