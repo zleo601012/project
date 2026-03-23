@@ -1,0 +1,12 @@
+{
+  "service_name": "illegal_discharge_score_service",
+  "model_name": "XGBoostClassifier",
+  "model_version": "v1",
+  "training_samples": 95,
+  "dataset_path": "dataset/node_1.csv",
+  "window_length": 12,
+  "task_type": "risk_score",
+  "threshold": 0.5,
+  "weak_label_threshold": 27.4584905,
+  "positive_ratio": 0.21052631578947367
+}
