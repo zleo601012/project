@@ -5,15 +5,9 @@
 - 使用 `dataset/` 中的数据集进行回放、窗口构建、训练与推理。
 - 所有业务任务都使用统一 HTTP JSON 接口。
 - 每个业务微服务都带有独立 `Dockerfile`、可启动的 `server.py`，可单独构建镜像。
+- 每个业务微服务现在都拥有自己的 `logic.py`，由服务自身定义训练策略、特征字段和预测入口，不再只依赖单个中心化训练函数。
 - `deployment/compose/docker-compose.services.yml` 提供了 12 个业务服务的本地编排样例。
 - 模型二进制产物不入库，统一通过训练脚本本地生成后再随镜像打包或挂载。
-本仓库当前已补齐**第一批 12 个正式业务微服务**，可用于你在多边缘设备上的批量部署测试。当前实现重点是：
-
-- 使用 `dataset/` 中的数据集进行回放、窗口构建、训练与推理。
-- 所有业务任务都使用统一 HTTP JSON 接口。
-- 已补齐 12 个业务微服务的目录、推理服务、训练脚本与模型元数据。
-- 仍保留阶段化扩展思路：当前优先完成“服务完整可测”，后续再继续强化容器化、多节点卸载与镜像感知调度。
-- 模型二进制产物不入库，统一通过训练脚本本地生成。
 
 ## 已实现的 12 个业务微服务
 
@@ -38,6 +32,21 @@ python scripts/run_all_services_demo.py --dataset dataset/node_1.csv --limit 80
 python -m pytest -q
 ```
 
+
+## Git 合并冲突控制
+
+如果你不想在这个原型仓库里反复手工处理冲突，控制位置就在仓库根目录的 `.gitattributes`。当前仓库已经把 `services/`、`shared/`、`training/`、`tests/`、`scripts/` 等高频冲突目录设置成 `merge=keep-current`。
+
+首次克隆后执行一次：
+
+```bash
+bash scripts/setup_keep_current_merge.sh
+```
+
+执行后，本地 Git 会注册 `keep-current` merge driver；以后这些路径在 merge 时会**自动保留你当前分支的版本**，不再弹出那种一大堆冲突块。
+
+> 这相当于“默认接受当前分支内容”，适合你这种原型分支快速推进；但也意味着被覆盖路径上的上游改动不会自动进入当前分支。
+
 ## 镜像构建与运行
 
 ### 构建单个服务镜像
@@ -61,9 +70,3 @@ docker compose -f deployment/compose/docker-compose.services.yml up --build
 > 说明：容器运行推理前需要存在对应的 `models/trained/*.joblib` 模型文件；可先执行训练脚本生成，再选择将模型打包进镜像或运行时挂载。
 
 > 说明：当前执行环境无法联网安装依赖，因此仓库内提供了极简兼容层；容器内默认仍可直接运行这些服务，但如果你在真实环境部署，建议切换到正式依赖并接入真实 ASGI/WSGI 运行栈。
-pytest
-```
-
-> 说明：`.joblib` 模型文件属于二进制文件，仓库只提交训练脚本、元数据与说明，不提交模型二进制。
-
-> 说明：当前执行环境无法联网安装依赖，因此仓库内提供了极简的 `fastapi` / `pydantic` / `sklearn` / `lightgbm` / `xgboost` 兼容层，保证原型在离线沙箱中可运行；后续可替换为正式依赖。

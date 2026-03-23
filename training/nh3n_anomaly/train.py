@@ -1,14 +1,18 @@
 from __future__ import annotations
 
 import argparse
+import sys
 from pathlib import Path
-from shared.ml.training import train_service
 
-SERVICE_NAME = 'nh3n_anomaly_service'
+ROOT = Path(__file__).resolve().parents[2]
+if str(ROOT) not in sys.path:
+    sys.path.insert(0, str(ROOT))
+
+from services.nh3n_anomaly_service.logic import train as service_train
 
 
-def train(dataset_path: str | Path, limit: int | None = None) -> dict:
-    return train_service(SERVICE_NAME, dataset_path, limit=limit)
+def train(dataset_path: str, limit: int | None = None):
+    return service_train(dataset_path, limit=limit)
 
 
 def main():
@@ -16,8 +20,7 @@ def main():
     parser.add_argument('--dataset', required=True)
     parser.add_argument('--limit', type=int, default=None)
     args = parser.parse_args()
-    metadata = train(args.dataset, limit=args.limit)
-    print(metadata)
+    print(train(args.dataset, limit=args.limit))
 
 
 if __name__ == '__main__':

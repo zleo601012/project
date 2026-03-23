@@ -1,3 +1,3 @@
 from __future__ import annotations
 
-from shared.ml.predictors import predict_forecast as predict
+from services.tss_turbidity_forecast_service.logic import predict

@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from collections import defaultdict, deque
 from uuid import uuid4
-from shared.config.service_catalog import ALL_DATA_FIELDS, SERVICE_CATALOG
+from shared.config.data_fields import ALL_DATA_FIELDS
 from shared.schemas.common import BuildTasksRequest, BuildTasksResponse, FeatureWindow, InferRequest, ReplayRecord
 
 
@@ -11,6 +11,8 @@ def _record_value(record: ReplayRecord, field: str):
 
 
 def build_tasks(request: BuildTasksRequest) -> BuildTasksResponse:
+    from shared.config.service_catalog import SERVICE_CATALOG
+
     tasks: list[InferRequest] = []
     grouped: dict[str, list[ReplayRecord]] = defaultdict(list)
     for record in request.records:

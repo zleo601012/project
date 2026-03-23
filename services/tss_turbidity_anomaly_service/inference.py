@@ -1,3 +1,3 @@
 from __future__ import annotations
 
-from shared.ml.predictors import predict_anomaly as predict
+from services.tss_turbidity_anomaly_service.logic import predict

@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 from statistics import mean, pstdev
-from shared.config.service_catalog import SERVICE_CATALOG
 from shared.schemas.common import InferRequest
 
 
@@ -21,6 +20,8 @@ def _summary(values: list[float]) -> dict[str, float]:
 
 
 def make_feature_vector(request: InferRequest) -> list[float]:
+    from shared.config.service_catalog import SERVICE_CATALOG
+
     definition = SERVICE_CATALOG[request.service_name]
     vector: list[float] = []
     for field in definition.input_fields:

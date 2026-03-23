@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from shared.ml.predictors import predict_anomaly
+from services.cod_anomaly_service.logic import SERVICE_DEFINITION, predict
 from shared.service_base import create_inference_app
 
-app = create_inference_app('cod_anomaly_service', predict_anomaly)
+app = create_inference_app(SERVICE_DEFINITION.service_name, predict)

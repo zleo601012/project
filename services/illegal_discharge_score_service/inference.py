@@ -1,3 +1,3 @@
 from __future__ import annotations
 
-from shared.ml.predictors import predict_risk_score as predict
+from services.illegal_discharge_score_service.logic import predict

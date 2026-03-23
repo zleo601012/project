@@ -3,7 +3,7 @@ from __future__ import annotations
 from datetime import datetime
 from typing import Any, Literal
 from pydantic import BaseModel, Field, model_validator
-from shared.config.service_catalog import ALL_DATA_FIELDS, SERVICE_CATALOG
+from shared.config.data_fields import ALL_DATA_FIELDS
 
 class FeatureWindow(BaseModel):
     ts: list[str]
@@ -45,6 +45,8 @@ class InferRequest(BaseModel):
 
     @model_validator(mode='after')
     def validate_service_window(self) -> 'InferRequest':
+        from shared.config.service_catalog import SERVICE_CATALOG
+
         service = SERVICE_CATALOG.get(self.service_name)
         if service and self.features.length() != service.window_length:
             raise ValueError(

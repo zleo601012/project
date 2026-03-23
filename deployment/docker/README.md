@@ -7,4 +7,3 @@ docker build -f services/flow_anomaly_service/Dockerfile -t edge-offload/flow-an
 ```
 
 镜像内默认通过 `python -m services.<service>.server` 启动基于标准库 HTTP Server 的推理服务，暴露 `8000` 端口。
-# deployment/docker/README.md
