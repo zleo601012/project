@@ -1,0 +1,15 @@
+# Prototype repo merge policy: keep the current branch version for most project assets
+# to avoid repeated PR conflicts on service scaffolding and generated metadata.
+README.md merge=keep-current
+.gitignore merge=keep-current
+.dockerignore merge=keep-current
+pyproject.toml merge=keep-current
+
+deployment/** merge=keep-current
+models/trained/*.metadata.json merge=keep-current
+scripts/** merge=keep-current
+services/** merge=keep-current
+shared/** merge=keep-current
+system_services/** merge=keep-current
+tests/** merge=keep-current
+training/** merge=keep-current
