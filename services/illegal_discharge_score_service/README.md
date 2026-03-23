@@ -150,3 +150,15 @@ uvicorn services.illegal_discharge_score_service.app:app --host 0.0.0.0 --port 8
 - 当前以“先跑通完整链路”为目标
 - 模型精度不是第一优先级，后续可以替换为更强模型或更精细的弱标签策略
 - 模型二进制文件默认不入库，由训练脚本在本地生成
+
+## 9. 容器镜像构建
+
+本服务目录已补齐独立 `Dockerfile` 与可直接启动的 `server.py`，可以单独构建为镜像：
+
+```bash
+docker build -f services/illegal_discharge_score_service/Dockerfile -t edge-offload/illegal_discharge_score_service:local .
+docker run --rm -p 8000:8000 edge-offload/illegal_discharge_score_service:local
+```
+
+> 如果需要在容器内执行推理，请先在宿主机生成 `models/trained/illegal_discharge_score_service.joblib`，或在镜像构建前将训练产物放入构建上下文。
+
