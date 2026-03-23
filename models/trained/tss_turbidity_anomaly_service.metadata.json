@@ -1,0 +1,12 @@
+{
+  "service_name": "tss_turbidity_anomaly_service",
+  "model_name": "XGBoostClassifier",
+  "model_version": "v1",
+  "training_samples": 4315,
+  "dataset_path": "dataset/node_1.csv",
+  "window_length": 12,
+  "task_type": "anomaly",
+  "threshold": 0.5,
+  "weak_label_threshold": 60.92416225000001,
+  "positive_ratio": 0.20023174971031285
+}
