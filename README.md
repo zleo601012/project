@@ -40,6 +40,18 @@
 docker build -f services/flow_anomaly_service/Dockerfile services/flow_anomaly_service -t edge-offload/flow-anomaly-service:standalone
 docker build -f services/flow_forecast_service/Dockerfile services/flow_forecast_service -t edge-offload/flow-forecast-service:standalone
 ```
+### 先测试 flow_anomaly_service + flow_forecast_service（不需要先启动 uvicorn）
+
+```bash
+./scripts/test_flow_services.sh --dataset dataset/node_1.csv
+python scripts/test_flow_services.py --dataset dataset/node_1.csv
+```
+
+这个脚本会自动：
+
+- 检查并按需训练 `flow_anomaly_service` / `flow_forecast_service` 模型。
+- 用内置 `TestClient` 直接调用 `/health`、`/meta`、`/infer`。
+- 避开 `curl 连接被拒绝` 这类“服务还没启动”的问题。
 
 ### 完整训练 / demo / pytest
 
@@ -47,12 +59,16 @@ docker build -f services/flow_forecast_service/Dockerfile services/flow_forecast
 python3 scripts/train_all_services.py --dataset dataset/node_1.csv
 python3 scripts/run_all_services_demo.py --dataset dataset/node_1.csv --limit 80
 python3 -m pytest -q
+python scripts/train_all_services.py --dataset dataset/node_1.csv
+python scripts/run_all_services_demo.py --dataset dataset/node_1.csv --limit 80
+python -m pytest -q
 ```
 
 如果本机提示找不到 `pytest`，请先安装开发依赖：
 
 ```bash
 python3 -m pip install -e ".[dev]"
+python -m pip install -e ".[dev]"
 ```
 
 

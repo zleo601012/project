@@ -27,3 +27,7 @@ def train_model(payload: dict) -> dict:
 @app.post('/infer')
 def infer(payload: dict) -> dict:
     return predict(payload)
+from services.flow_forecast_service.logic import SERVICE_DEFINITION, predict
+from shared.service_base import create_inference_app
+
+app = create_inference_app(SERVICE_DEFINITION.service_name, predict)

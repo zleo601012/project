@@ -4,6 +4,8 @@ services:
     build:
       context: ../../services/flow_anomaly_service
       dockerfile: Dockerfile
+      context: ../..
+      dockerfile: services/flow_anomaly_service/Dockerfile
     image: edge-offload/flow-anomaly-service:local
     ports: ['8101:8000']
   water_quality_anomaly_service:
@@ -40,6 +42,8 @@ services:
     build:
       context: ../../services/flow_forecast_service
       dockerfile: Dockerfile
+      context: ../..
+      dockerfile: services/flow_forecast_service/Dockerfile
     image: edge-offload/flow-forecast-service:local
     ports: ['8201:8000']
   cod_forecast_service:
