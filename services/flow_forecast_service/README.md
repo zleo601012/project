@@ -4,6 +4,7 @@
 
 - **作用**：流量短时预测
 - **任务类型**：`forecast`
+- **默认模型**：`FlowForecastRidge`
 - **默认模型**：`LightGBMRegressor`
 - **窗口长度**：`24` 条记录
 - **适用场景**：基于最近 120 秒窗口做流量短时预测，适合做边缘侧轻量预测与调度输入。
@@ -90,6 +91,8 @@
   "service_name": "flow_forecast_service",
   "result_type": "forecast",
   "prediction": 0.52,
+  "model_name": "FlowForecastRidge",
+  "model_version": "v2",
   "model_name": "LightGBMRegressor",
   "model_version": "v1",
   "inference_ms": 8
@@ -112,6 +115,24 @@ python training/flow_forecast/train.py --dataset dataset/node_1.csv
 python scripts/train_all_services.py --dataset dataset/node_1.csv
 ```
 
+## 5.1 推荐的快速自测方式
+
+如果你只是想验证这两个 phase-1 流量服务能不能正常工作，最简单的方式不是先起 `uvicorn`，而是直接运行：
+
+```bash
+python scripts/test_flow_services.py --dataset dataset/node_1.csv
+```
+
+这个脚本会自动补齐模型训练（如果模型文件还不存在），并顺序调用：
+
+- `flow_anomaly_service` 的 `/health`、`/meta`、`/infer`
+- `flow_forecast_service` 的 `/health`、`/meta`、`/infer`
+
+这样可以避免“`curl` 连接被拒绝”以及“机器上还没装 `pytest`”时不知道怎么测的问题。
+
+## 6. 本地运行方式
+
+如果运行环境已安装 `uvicorn` / `fastapi`，并且你想做真实端口联调，可以本地启动：
 ## 6. 本地运行方式
 
 如果运行环境已安装 `uvicorn` / `fastapi`，可以直接本地启动：
@@ -120,6 +141,7 @@ python scripts/train_all_services.py --dataset dataset/node_1.csv
 uvicorn services.flow_forecast_service.app:app --host 0.0.0.0 --port 8201
 ```
 
+启动后再访问：
 启动后可访问：
 
 - `http://127.0.0.1:8201/health`
@@ -138,6 +160,7 @@ uvicorn services.flow_forecast_service.app:app --host 0.0.0.0 --port 8201
 
 ## 8. 当前实现说明
 
+- 当前版本号：`v2`
 - 当前版本号：`v1`
 - 当前以“先跑通完整链路”为目标
 - 模型精度不是第一优先级，后续可以替换为更强模型或更精细的弱标签策略
@@ -152,5 +175,6 @@ docker build -f services/flow_forecast_service/Dockerfile -t edge-offload/flow_f
 docker run --rm -p 8000:8000 edge-offload/flow_forecast_service:local
 ```
 
+> 如果需要在容器内执行 `/meta` 或 `/infer`，请先在宿主机生成 `models/trained/flow_forecast_service.joblib`，或在镜像构建前将训练产物放入构建上下文。仅 `/health` 不依赖模型文件。
 > 如果需要在容器内执行推理，请先在宿主机生成 `models/trained/flow_forecast_service.joblib`，或在镜像构建前将训练产物放入构建上下文。
 
