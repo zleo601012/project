@@ -32,6 +32,21 @@ python scripts/run_all_services_demo.py --dataset dataset/node_1.csv --limit 80
 python -m pytest -q
 ```
 
+
+## Git 合并冲突控制
+
+如果你不想在这个原型仓库里反复手工处理冲突，控制位置就在仓库根目录的 `.gitattributes`。当前仓库已经把 `services/`、`shared/`、`training/`、`tests/`、`scripts/` 等高频冲突目录设置成 `merge=keep-current`。
+
+首次克隆后执行一次：
+
+```bash
+bash scripts/setup_keep_current_merge.sh
+```
+
+执行后，本地 Git 会注册 `keep-current` merge driver；以后这些路径在 merge 时会**自动保留你当前分支的版本**，不再弹出那种一大堆冲突块。
+
+> 这相当于“默认接受当前分支内容”，适合你这种原型分支快速推进；但也意味着被覆盖路径上的上游改动不会自动进入当前分支。
+
 ## 镜像构建与运行
 
 ### 构建单个服务镜像
