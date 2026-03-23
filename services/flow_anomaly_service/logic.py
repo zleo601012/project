@@ -18,6 +18,10 @@ class ServiceDefinition:
     model_version: str
     weak_label_fields: list[str] | None = None
 
+from shared.config.service_definition import ServiceDefinition
+from shared.ml.phase1_models import predict_flow_anomaly, train_flow_anomaly_service
+from shared.ml.predictors import predict_anomaly
+from shared.ml.service_logic import train_isolation_service
 
 SERVICE_DEFINITION = ServiceDefinition(
     service_name='flow_anomaly_service',
@@ -246,3 +250,26 @@ def predict(request: dict, output_dir: str | Path | None = None) -> dict:
         'model_version': metadata['model_version'],
         'inference_ms': 0,
     }
+    weak_label_fields=['flow_m3s'],
+    model_version='v2',
+)
+
+predict = predict_flow_anomaly
+
+
+def train(dataset_path: str, limit: int | None = None):
+    return train_flow_anomaly_service(
+        SERVICE_DEFINITION.service_name,
+        dataset_path,
+        SERVICE_DEFINITION.window_length,
+        limit=limit,
+    )
+    model_name='IsolationForest',
+    weak_label_fields=['flow_m3s'],
+)
+
+predict = predict_anomaly
+
+
+def train(dataset_path: str, limit: int | None = None):
+    return train_isolation_service(SERVICE_DEFINITION, dataset_path, limit=limit)

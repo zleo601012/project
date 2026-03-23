@@ -18,6 +18,10 @@ class ServiceDefinition:
     model_version: str
     target_field: str | None = None
 
+from shared.config.service_definition import ServiceDefinition
+from shared.ml.phase1_models import predict_flow_forecast, train_flow_forecast_service
+from shared.ml.predictors import predict_forecast
+from shared.ml.service_logic import train_forecast_service
 
 SERVICE_DEFINITION = ServiceDefinition(
     service_name='flow_forecast_service',
@@ -268,3 +272,26 @@ def predict(request: dict, output_dir: str | Path | None = None) -> dict:
         'model_version': metadata['model_version'],
         'inference_ms': 0,
     }
+    target_field='flow_m3s',
+    model_version='v2',
+)
+
+predict = predict_flow_forecast
+
+
+def train(dataset_path: str, limit: int | None = None):
+    return train_flow_forecast_service(
+        SERVICE_DEFINITION.service_name,
+        dataset_path,
+        SERVICE_DEFINITION.window_length,
+        limit=limit,
+    )
+    model_name='LightGBMRegressor',
+    target_field='flow_m3s',
+)
+
+predict = predict_forecast
+
+
+def train(dataset_path: str, limit: int | None = None):
+    return train_forecast_service(SERVICE_DEFINITION, dataset_path, limit=limit)
