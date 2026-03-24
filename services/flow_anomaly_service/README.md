@@ -1,64 +1,142 @@
-# flow_anomaly_service（可独立运行）
+# flow_anomaly_service
 
-这个目录现在可以独立运行，不依赖仓库里的 `shared/*`、`system_services/*`、其他业务服务。
+基于 **Python + FastAPI + PyTorch(LSTM Autoencoder)** 的流量异常检测微服务。
 
-## 独立运行方式
+## 1. 项目简介
 
-> 假设你把本目录单独拷贝到目标机器，目录名为 `flow_anomaly_service/`。
+该服务用于处理长度为 12 的多变量时间窗口（3个特征：`flow_m3s`、`rain_intensity_mmph`、`temp_C`），通过 LSTM Autoencoder 重构误差进行异常检测。
 
-### 1) 训练模型
+- 输入形状：`[batch, 12, 3]`
+- 异常分数：窗口整体 MSE 重构误差
+- 异常判定：`reconstruction_error > threshold`
 
-```bash
-python -m flow_anomaly_service.train --dataset /path/to/node_1.csv
+## 2. 目录结构
+
+```text
+flow_anomaly_service/
+├── app/
+│   ├── __init__.py
+│   ├── config.py
+│   ├── main.py
+│   ├── model.py
+│   ├── schemas.py
+│   └── service.py
+├── artifacts/                # 训练输出目录（model.pt / scaler.pkl / threshold.json）
+├── train.py
+├── requirements.txt
+├── Dockerfile
+└── README.md
 ```
 
-### 2) 启动服务
+## 3. 安装方式
 
 ```bash
-python -m flow_anomaly_service.server
+cd services/flow_anomaly_service
+python -m venv .venv
+source .venv/bin/activate
+pip install -r requirements.txt
 ```
 
-默认监听 `0.0.0.0:8000`，支持：
+## 4. 训练命令
 
-- `GET /health`
-- `GET /meta`
-- `POST /train`
-- `POST /infer`
-
-## 性能/精度权衡参数（默认偏高精度）
-
-为支持“更长计算时间 + 更稳定打分”，服务支持以下环境变量：
-
-- `SCORE_REFINEMENT_PASSES`：分数细化轮数，默认 `64`（越大越慢，分数更平滑）。
-- `TARGET_INFER_MS`：每次推理最小耗时，默认 `2000`（即单次约 2 秒）。
-
-示例：
+### 使用真实 CSV 训练
 
 ```bash
-SCORE_REFINEMENT_PASSES=128 TARGET_INFER_MS=2000 python -m flow_anomaly_service.server
+python train.py --train-csv ../../dataset/node_1.csv --epochs 30 --threshold-quantile 0.95
 ```
 
-## 推理请求要求
-
-`POST /infer` 的 `features` 必须包含以下字段，并且长度一致、且长度必须是 `12`：
-
-- `ts`
-- `slot`
-- `node_id`
-- `flow_m3s`
-- `rain_intensity_mmph`
-- `temp_C`
-
-这保证了每个任务都携带完整窗口，不依赖目标节点缓存历史数据。
-
-## Docker（独立目录作为构建上下文）
-
-
-## Docker（独立目录作为构建上下文）
-
-在 `flow_anomaly_service/` 目录下执行：
+### 使用 mock 数据快速验证
 
 ```bash
-docker build -t flow-anomaly-standalone .
-docker run --rm -p 8101:8000 flow-anomaly-standalone
+python train.py --use-mock-data --mock-rows 1200 --epochs 5
 ```
+
+训练完成后会输出到 `artifacts/`：
+
+- `model.pt`
+- `scaler.pkl`
+- `threshold.json`
+
+## 5. 启动命令
+
+```bash
+uvicorn app.main:app --host 0.0.0.0 --port 8000
+```
+
+## 6. curl 调用示例
+
+### 健康检查
+
+```bash
+curl http://127.0.0.1:8000/health
+```
+
+### 异常检测
+
+```bash
+curl -X POST "http://127.0.0.1:8000/detect" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "window": [
+      {"flow_m3s": 1.2, "rain_intensity_mmph": 0.0, "temp_C": 23.1},
+      {"flow_m3s": 1.3, "rain_intensity_mmph": 0.0, "temp_C": 23.0},
+      {"flow_m3s": 1.4, "rain_intensity_mmph": 0.1, "temp_C": 22.9},
+      {"flow_m3s": 1.3, "rain_intensity_mmph": 0.0, "temp_C": 23.1},
+      {"flow_m3s": 1.2, "rain_intensity_mmph": 0.0, "temp_C": 23.0},
+      {"flow_m3s": 1.1, "rain_intensity_mmph": 0.0, "temp_C": 22.9},
+      {"flow_m3s": 1.0, "rain_intensity_mmph": 0.2, "temp_C": 22.8},
+      {"flow_m3s": 1.2, "rain_intensity_mmph": 0.0, "temp_C": 22.9},
+      {"flow_m3s": 1.3, "rain_intensity_mmph": 0.0, "temp_C": 23.0},
+      {"flow_m3s": 1.4, "rain_intensity_mmph": 0.0, "temp_C": 23.1},
+      {"flow_m3s": 1.5, "rain_intensity_mmph": 0.0, "temp_C": 23.2},
+      {"flow_m3s": 1.6, "rain_intensity_mmph": 0.0, "temp_C": 23.3}
+    ]
+  }'
+```
+
+## 7. 输入输出说明
+
+### 输入
+
+`POST /detect` 请求体：
+
+- `window`：长度必须等于 `12`
+- 每个时间步必须包含且仅依赖以下数值字段：
+  - `flow_m3s`
+  - `rain_intensity_mmph`
+  - `temp_C`
+
+### 输出
+
+```json
+{
+  "is_anomaly": true,
+  "anomaly_score": 0.8421,
+  "threshold": 0.5000,
+  "reconstruction_error": 0.8421,
+  "model_name": "lstm_autoencoder",
+  "window_length": 12
+}
+```
+
+---
+
+## 运行步骤（最小可运行流程）
+
+1. 安装依赖
+   ```bash
+   pip install -r requirements.txt
+   ```
+2. 训练模型
+   ```bash
+   python train.py --use-mock-data --epochs 5
+   ```
+3. 启动服务
+   ```bash
+   uvicorn app.main:app --host 0.0.0.0 --port 8000
+   ```
+4. 测试接口
+   ```bash
+   curl http://127.0.0.1:8000/health
+   curl -X POST "http://127.0.0.1:8000/detect" -H "Content-Type: application/json" -d '{"window": [...12条记录...]}'
+   ```
