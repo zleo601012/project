@@ -7,3 +7,4 @@ Expose `app` at package level for compatibility with legacy
 from .main import app
 
 __all__ = ["app"]
+"""flow_anomaly_service application package."""
