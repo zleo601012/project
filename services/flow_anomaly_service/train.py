@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import argparse
 
-from services.flow_anomaly_service.logic import train as train_service
+from .logic import train as train_service
 
 
 def main() -> None:

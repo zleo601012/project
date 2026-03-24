@@ -1,7 +1,7 @@
 from __future__ import annotations
 
-from services.flow_anomaly_service.logic import SERVICE_DEFINITION, meta, predict, train
-from services.flow_anomaly_service.runtime import App
+from .logic import SERVICE_DEFINITION, meta, predict, train
+from .runtime import App
 
 app = App(title=SERVICE_DEFINITION.service_name)
 
@@ -27,7 +27,3 @@ def train_model(payload: dict) -> dict:
 @app.post('/infer')
 def infer(payload: dict) -> dict:
     return predict(payload)
-from services.flow_anomaly_service.logic import SERVICE_DEFINITION, predict
-from shared.service_base import create_inference_app
-
-app = create_inference_app(SERVICE_DEFINITION.service_name, predict)
