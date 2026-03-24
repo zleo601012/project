@@ -26,8 +26,6 @@ def build_tasks(request: BuildTasksRequest) -> BuildTasksResponse:
                 window.append(record)
                 if len(window) < definition.window_length:
                     continue
-                if idx % 2 != 1:
-                    continue
                 feature_payload = {
                     field: [_record_value(item, field) for item in window]
                     for field in ALL_DATA_FIELDS
