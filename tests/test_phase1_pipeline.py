@@ -117,6 +117,9 @@ def test_replay_and_window_build_pipeline():
     payload = build_resp.json()
     assert any(task['service_name'] == 'flow_anomaly_service' for task in payload['generated_tasks'])
     assert any(task['service_name'] == 'flow_forecast_service' for task in payload['generated_tasks'])
+    anomaly_tasks = [task for task in payload['generated_tasks'] if task['service_name'] == 'flow_anomaly_service']
+    assert anomaly_tasks
+    assert all(len(task['features']['ts']) == 12 for task in anomaly_tasks)
 
 
 def test_inference_services_return_unified_schema():

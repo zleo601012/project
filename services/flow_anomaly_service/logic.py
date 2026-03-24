@@ -3,7 +3,7 @@ from __future__ import annotations
 import csv
 import json
 import os
-from dataclasses import dataclass, asdict
+from dataclasses import asdict, dataclass
 from pathlib import Path
 from statistics import mean, pstdev
 
@@ -16,12 +16,7 @@ class ServiceDefinition:
     input_fields: list[str]
     model_name: str
     model_version: str
-    weak_label_fields: list[str] | None = None
 
-from shared.config.service_definition import ServiceDefinition
-from shared.ml.phase1_models import predict_flow_anomaly, train_flow_anomaly_service
-from shared.ml.predictors import predict_anomaly
-from shared.ml.service_logic import train_isolation_service
 
 SERVICE_DEFINITION = ServiceDefinition(
     service_name='flow_anomaly_service',
@@ -30,7 +25,6 @@ SERVICE_DEFINITION = ServiceDefinition(
     input_fields=['flow_m3s', 'rain_intensity_mmph', 'temp_C'],
     model_name='FlowAnomalyBaseline',
     model_version='v2',
-    weak_label_fields=['flow_m3s'],
 )
 
 _REQUIRED_FIELDS = ['ts', 'slot', 'node_id', 'flow_m3s', 'rain_intensity_mmph', 'temp_C']
@@ -82,8 +76,7 @@ def _load_records(dataset_path: str | Path, limit: int | None = None) -> list[di
         reader = csv.DictReader(handle)
         rows = []
         for index, row in enumerate(reader):
-            normalized = {key.lstrip('\ufeff'): value for key, value in row.items()}
-            rows.append(normalized)
+            rows.append({key.lstrip('\ufeff'): value for key, value in row.items()})
             if limit is not None and index + 1 >= limit:
                 break
     return rows
@@ -120,9 +113,11 @@ def _feature_vector(request: dict) -> tuple[list[str], list[float]]:
     flow = [float(value) for value in features['flow_m3s']]
     rain = [float(value) for value in features['rain_intensity_mmph']]
     temp = [float(value) for value in features['temp_C']]
+
     flow_mean = float(mean(flow))
     rain_mean = float(mean(rain))
     temp_mean = float(mean(temp))
+
     names = [
         'flow_mean', 'flow_std', 'flow_last', 'flow_delta', 'flow_min', 'flow_max', 'flow_slope',
         'rain_mean', 'rain_last', 'rain_accum', 'rain_delta',
@@ -168,24 +163,20 @@ def _write_artifacts(model: dict, metadata: dict, output_dir: str | Path | None 
     _metadata_path(target_dir).write_text(json.dumps(metadata, indent=2, ensure_ascii=False), encoding='utf-8')
 
 
-def _write_compatibility_copy(model: dict, metadata: dict, output_dir: str | Path | None) -> None:
-    default_dir = _default_artifact_dir()
-    if output_dir is None or Path(output_dir) == default_dir:
-        return
-    _write_artifacts(model, metadata, default_dir)
-
-
 def train(dataset_path: str, limit: int | None = None, output_dir: str | Path | None = None) -> dict:
     requests = _build_requests(dataset_path, limit=limit)
     feature_names, _ = _feature_vector(requests[0])
     vectors = [_feature_vector(request)[1] for request in requests]
+
     means = [float(mean(row[index] for row in vectors)) for index in range(len(feature_names))]
     scales = []
     for index in range(len(feature_names)):
         spread = _std([row[index] for row in vectors])
         scales.append(spread if spread > 1e-6 else 1.0)
+
     training_scores = [_anomaly_score(row, means, scales) for row in vectors]
     threshold = _percentile(training_scores, 0.92)
+
     model = {
         'type': 'flow_anomaly_baseline',
         'feature_names': feature_names,
@@ -207,8 +198,8 @@ def train(dataset_path: str, limit: int | None = None, output_dir: str | Path | 
         'threshold': threshold,
         'artifact_dir': str(_artifact_dir(output_dir)),
     }
+
     _write_artifacts(model, metadata, output_dir)
-    _write_compatibility_copy(model, metadata, output_dir)
     return metadata
 
 
@@ -236,7 +227,24 @@ def meta() -> dict:
     return payload
 
 
+def _validate_request(request: dict) -> None:
+    if request.get('service_name') != SERVICE_DEFINITION.service_name:
+        raise ValueError(f"service_name must be '{SERVICE_DEFINITION.service_name}'")
+    features = request.get('features')
+    if not isinstance(features, dict):
+        raise ValueError('features must be an object')
+    for field in _REQUIRED_FIELDS:
+        if field not in features:
+            raise ValueError(f'missing features.{field}')
+    lengths = [len(features[field]) for field in _REQUIRED_FIELDS]
+    if len(set(lengths)) != 1:
+        raise ValueError(f'feature lengths must match, got {lengths}')
+    if lengths[0] != SERVICE_DEFINITION.window_length:
+        raise ValueError(f'window length must be {SERVICE_DEFINITION.window_length}, got {lengths[0]}')
+
+
 def predict(request: dict, output_dir: str | Path | None = None) -> dict:
+    _validate_request(request)
     model, metadata = _load_artifacts(output_dir)
     _, vector = _feature_vector(request)
     score = _anomaly_score(vector, model['feature_means'], model['feature_scales'])
@@ -250,26 +258,3 @@ def predict(request: dict, output_dir: str | Path | None = None) -> dict:
         'model_version': metadata['model_version'],
         'inference_ms': 0,
     }
-    weak_label_fields=['flow_m3s'],
-    model_version='v2',
-)
-
-predict = predict_flow_anomaly
-
-
-def train(dataset_path: str, limit: int | None = None):
-    return train_flow_anomaly_service(
-        SERVICE_DEFINITION.service_name,
-        dataset_path,
-        SERVICE_DEFINITION.window_length,
-        limit=limit,
-    )
-    model_name='IsolationForest',
-    weak_label_fields=['flow_m3s'],
-)
-
-predict = predict_anomaly
-
-
-def train(dataset_path: str, limit: int | None = None):
-    return train_isolation_service(SERVICE_DEFINITION, dataset_path, limit=limit)
